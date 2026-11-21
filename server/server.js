@@ -80,6 +80,16 @@ app.patch("/api/books/:id", async (req, res) => {
   res.json(book);
 });
 
+app.delete("/api/books/:id", async (req, res) => {
+  const id = parseId(req.params.id);
+  if (id === null) return res.status(400).json({ error: "id must be a positive integer" });
+
+  const removed = await store.remove(id);
+  if (!removed) return res.status(404).json({ error: `Book ${id} not found` });
+
+  res.status(204).end();
+});
+
 app.listen(PORT, () => {
   console.log(`API running at http://localhost:${PORT}`);
   console.log(`Allowed client origin: ${CLIENT_ORIGIN}`);
