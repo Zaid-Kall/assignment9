@@ -1,7 +1,7 @@
 import express from "express";
 import cors from "cors";
 import * as store from "./booksStore.js";
-import { parseId } from "./validate.js";
+import { parseId, validateBook, findDuplicate } from "./validate.js";
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -32,6 +32,25 @@ app.get("/api/books/:id", async (req, res) => {
   }
 
   res.status(200).json(book);
+});
+
+// POST /api/books: create a book from a complete body
+app.post("/api/books", async (req, res) => {
+  const result = validateBook(req.body);
+  if (!result.ok) {
+    return res.status(400).json({ error: result.error });
+  }
+
+  const books = await store.getAll();
+  const duplicate = findDuplicate(result.value, books);
+  if (duplicate) {
+    return res.status(409).json({
+      error: `A book with the same title and author already exists (id ${duplicate.id})`,
+    });
+  }
+
+  const book = await store.create(result.value);
+  res.status(201).location(`/api/books/${book.id}`).json(book);
 });
 
 app.listen(PORT, () => {
