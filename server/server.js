@@ -11,6 +11,27 @@ const app = express();
 app.use(cors({ origin: CLIENT_ORIGIN }));
 app.use(express.json());
 
+app.get("/api/stats", async (req, res) => {
+  const books = await store.getAll();
+
+  const readBooks = books.filter((b) => b.read);
+  const rated = books.filter((b) => typeof b.rating === "number");
+  const ratingSum = rated.reduce((sum, b) => sum + b.rating, 0);
+
+  const byGenre = {};
+  for (const book of books) {
+    byGenre[book.genre] = (byGenre[book.genre] || 0) + 1;
+  }
+
+  res.json({
+    total: books.length,
+    read: readBooks.length,
+    unread: books.length - readBooks.length,
+    averageRating: rated.length > 0 ? Math.round((ratingSum / rated.length) * 100) / 100 : null,
+    byGenre,
+  });
+});
+
 app.get("/api/books", async (req, res) => {
   const books = await store.getAll();
   res.json(books);
