@@ -117,6 +117,23 @@ app.delete("/api/books/:id", async (req, res) => {
   res.status(204).end();
 });
 
+// Unknown routes
+app.use((req, res) => {
+  res.status(404).json({ error: `Route ${req.method} ${req.originalUrl} not found` });
+});
+
+// Error handler (must be last, and must have 4 parameters)
+app.use((err, req, res, next) => {
+  if (err.type === "entity.parse.failed") {
+    return res.status(400).json({ error: "Request body is not valid JSON" });
+  }
+  if (err.type === "entity.too.large") {
+    return res.status(413).json({ error: "Request body is too large" });
+  }
+  console.error(err);
+  res.status(500).json({ error: "Internal server error" });
+});
+
 app.listen(PORT, () => {
   console.log(`API running at http://localhost:${PORT}`);
   console.log(`Allowed client origin: ${CLIENT_ORIGIN}`);
