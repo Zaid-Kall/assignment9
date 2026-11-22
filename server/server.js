@@ -2,13 +2,14 @@ import express from "express";
 import cors from "cors";
 import * as store from "./booksStore.js";
 import { parseId, validateBook, validateMerged, findDuplicate } from "./validate.js";
+import { applyQuery } from "./query.js";
 
 const PORT = process.env.PORT || 3000;
 const CLIENT_ORIGIN = process.env.CLIENT_ORIGIN || "http://localhost:5173";
 
 const app = express();
 
-app.use(cors({ origin: CLIENT_ORIGIN }));
+app.use(cors({ origin: CLIENT_ORIGIN, exposedHeaders: ["X-Total-Count", "Location"] }));
 app.use(express.json());
 
 app.get("/api/stats", async (req, res) => {
@@ -34,7 +35,12 @@ app.get("/api/stats", async (req, res) => {
 
 app.get("/api/books", async (req, res) => {
   const books = await store.getAll();
-  res.json(books);
+
+  const result = applyQuery(books, req.query);
+  if (!result.ok) return res.status(400).json({ error: result.error });
+
+  res.set("X-Total-Count", String(result.total));
+  res.json(result.items);
 });
 
 app.get("/api/books/:id", async (req, res) => {
