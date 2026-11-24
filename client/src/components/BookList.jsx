@@ -1,10 +1,17 @@
-function BookList({ books, loading, error, filtered }) {
+function BookList({ books, loading, error, filtered, onEdit, onRetry }) {
   if (loading) {
     return <p className="message">Loading books...</p>;
   }
 
   if (error) {
-    return <p className="message error">Error: {error}</p>;
+    return (
+      <div className="message error">
+        <p>Error: {error}</p>
+        <button type="button" onClick={onRetry}>
+          Retry
+        </button>
+      </div>
+    );
   }
 
   if (books.length === 0) {
@@ -30,6 +37,9 @@ function BookList({ books, loading, error, filtered }) {
               {book.read ? "Read" : "Unread"}
             </span>
             {book.read && book.rating !== null && <span>★ {book.rating}/5</span>}
+            <button type="button" onClick={() => onEdit(book)}>
+              Edit
+            </button>
           </div>
         </li>
       ))}

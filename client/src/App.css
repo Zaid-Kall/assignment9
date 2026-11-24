@@ -4,6 +4,21 @@
   padding: 24px 16px;
 }
 
+.app-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.app-header button,
+.status button,
+.message button,
+.book-form button {
+  padding: 8px 12px;
+  font: inherit;
+}
+
 .controls {
   display: flex;
   flex-wrap: wrap;
@@ -87,4 +102,48 @@
   align-items: center;
   gap: 12px;
   margin-top: 16px;
+}
+
+.book-form {
+  display: grid;
+  gap: 12px;
+  margin-bottom: 20px;
+  padding: 16px;
+  border: 1px solid #8886;
+  border-radius: 8px;
+}
+
+.book-form h2 {
+  margin: 0;
+  font-size: 1.2rem;
+}
+
+.book-form label {
+  display: grid;
+  gap: 4px;
+}
+
+.book-form label.checkbox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.book-form input,
+.book-form select {
+  padding: 8px 10px;
+  font: inherit;
+}
+
+.form-errors {
+  margin: 0;
+  padding: 10px 10px 10px 28px;
+  color: #d32f2f;
+  border: 1px solid #d32f2f;
+  border-radius: 6px;
+}
+
+.form-actions {
+  display: flex;
+  gap: 8px;
 }

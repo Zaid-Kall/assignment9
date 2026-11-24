@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
-import { listBooks } from "./api.js";
+import { createBook, listBooks, updateBook } from "./api.js";
 import BookControls from "./components/BookControls.jsx";
+import BookForm from "./components/BookForm.jsx";
 import BookList from "./components/BookList.jsx";
 import "./App.css";
 
@@ -11,6 +12,8 @@ function App() {
   const [filters, setFilters] = useState(initialFilters);
   const [debouncedQ, setDebouncedQ] = useState("");
   const [page, setPage] = useState(1);
+  const [reloadCount, setReloadCount] = useState(0);
+  const [form, setForm] = useState(null);
   const [result, setResult] = useState({ key: "", items: [], total: 0, error: "" });
 
   useEffect(() => {
@@ -19,7 +22,7 @@ function App() {
   }, [filters.q]);
 
   const { genre, read, sort, order } = filters;
-  const requestKey = [debouncedQ, genre, read, sort, order, page].join("|");
+  const requestKey = [debouncedQ, genre, read, sort, order, page, reloadCount].join("|");
 
   useEffect(() => {
     let ignore = false;
@@ -48,6 +51,10 @@ function App() {
   const loading = result.key !== requestKey;
   const totalPages = Math.max(1, Math.ceil(result.total / PAGE_SIZE));
 
+  function reload() {
+    setReloadCount((count) => count + 1);
+  }
+
   function handleChange(changes) {
     setFilters((prev) => ({ ...prev, ...changes }));
     setPage(1);
@@ -59,9 +66,40 @@ function App() {
     setPage(1);
   }
 
+  function handleEdit(book) {
+    setForm({ book });
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  async function handleSave(payload) {
+    if (form.book) {
+      await updateBook(form.book.id, payload);
+    } else {
+      await createBook(payload);
+    }
+    setForm(null);
+    reload();
+  }
+
   return (
     <main className="app">
-      <h1>Reading List</h1>
+      <header className="app-header">
+        <h1>Reading List</h1>
+        {!form && (
+          <button type="button" onClick={() => setForm({ book: null })}>
+            Add book
+          </button>
+        )}
+      </header>
+
+      {form && (
+        <BookForm
+          key={form.book ? form.book.id : "new"}
+          book={form.book}
+          onSubmit={handleSave}
+          onCancel={() => setForm(null)}
+        />
+      )}
 
       <BookControls filters={filters} onChange={handleChange} onReset={handleReset} />
 
@@ -70,6 +108,8 @@ function App() {
         loading={loading}
         error={result.error}
         filtered={Boolean(debouncedQ || genre || read)}
+        onEdit={handleEdit}
+        onRetry={reload}
       />
 
       {!loading && !result.error && result.total > 0 && (
@@ -78,7 +118,7 @@ function App() {
             Previous
           </button>
           <span>
-            Page {page} of {totalPages} ({result.total} books)
+            Page {page} of {totalPages} ({result.total} {result.total === 1 ? "book" : "books"})
           </span>
           <button
             type="button"
