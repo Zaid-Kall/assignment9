@@ -1,23 +1,22 @@
 import { useEffect, useState } from "react";
-import { getStats } from "../api.js";
+import { getStats } from "../api/books.js";
 
 function StatsPanel({ refreshKey }) {
   const [state, setState] = useState({ data: null, error: "" });
 
   useEffect(() => {
-    let ignore = false;
+    const controller = new AbortController();
 
-    getStats()
+    getStats(controller.signal)
       .then((data) => {
-        if (!ignore) setState({ data, error: "" });
+        if (!controller.signal.aborted) setState({ data, error: "" });
       })
       .catch((err) => {
-        if (!ignore) setState({ data: null, error: err.message });
+        if (err.name === "AbortError") return;
+        setState({ data: null, error: err.message });
       });
 
-    return () => {
-      ignore = true;
-    };
+    return () => controller.abort();
   }, [refreshKey]);
 
   if (state.error) {

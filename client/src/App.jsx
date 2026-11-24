@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { createBook, deleteBook, listBooks, updateBook } from "./api.js";
+import { createBook, deleteBook, listBooks, replaceBook, updateBook } from "./api/books.js";
 import BookControls from "./components/BookControls.jsx";
 import BookForm from "./components/BookForm.jsx";
 import BookList from "./components/BookList.jsx";
@@ -27,19 +27,23 @@ function App() {
   const requestKey = [debouncedQ, genre, read, sort, order, page, reloadCount].join("|");
 
   useEffect(() => {
-    let ignore = false;
+    // Cleanup aborts the previous request, so an old response never overwrites a newer one
+    const controller = new AbortController();
 
-    listBooks({
-      q: debouncedQ,
-      genre,
-      read,
-      sort,
-      order: sort ? order : "",
-      page,
-      limit: PAGE_SIZE,
-    })
+    listBooks(
+      {
+        q: debouncedQ,
+        genre,
+        read,
+        sort,
+        order: sort ? order : "",
+        page,
+        limit: PAGE_SIZE,
+      },
+      controller.signal
+    )
       .then(({ items, total }) => {
-        if (ignore) return;
+        if (controller.signal.aborted) return;
 
         // After deleting the last book on a page, go back to the last valid page
         if (items.length === 0 && total > 0 && page > 1) {
@@ -50,12 +54,11 @@ function App() {
         setResult({ key: requestKey, items, total, error: "" });
       })
       .catch((err) => {
-        if (!ignore) setResult({ key: requestKey, items: [], total: 0, error: err.message });
+        if (err.name === "AbortError") return;
+        setResult({ key: requestKey, items: [], total: 0, error: err.message });
       });
 
-    return () => {
-      ignore = true;
-    };
+    return () => controller.abort();
   }, [requestKey, debouncedQ, genre, read, sort, order, page]);
 
   const loading = result.key !== requestKey;
@@ -93,7 +96,7 @@ function App() {
 
   async function handleSave(payload) {
     if (form.book) {
-      await updateBook(form.book.id, payload);
+      await replaceBook(form.book.id, payload);
     } else {
       await createBook(payload);
     }
