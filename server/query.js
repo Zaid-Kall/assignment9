@@ -83,11 +83,10 @@ export function applyQuery(books, query) {
 
   const total = items.length;
 
-  if (page !== undefined || limit !== undefined) {
-    const size = limit ?? 10;
-    const start = ((page ?? 1) - 1) * size;
-    items = items.slice(start, start + size);
-  }
+  // Page size defaults to 50, page defaults to 1
+  const size = limit ?? 50;
+  const start = ((page ?? 1) - 1) * size;
+  items = items.slice(start, start + size);
 
   return { ok: true, items, total };
 }

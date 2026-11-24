@@ -33,6 +33,13 @@ app.get("/api/stats", async (req, res) => {
   });
 });
 
+// Deliberate crash: proves that an error thrown inside an async handler
+// reaches the error-handling middleware (documented in the README)
+app.get("/api/crash", async () => {
+  await Promise.resolve();
+  throw new Error("Deliberate crash to test the error handler");
+});
+
 app.get("/api/books", async (req, res) => {
   const books = await store.getAll();
 
@@ -119,7 +126,7 @@ app.delete("/api/books/:id", async (req, res) => {
 
 // Unknown routes
 app.use((req, res) => {
-  res.status(404).json({ error: `Route ${req.method} ${req.originalUrl} not found` });
+  res.status(404).json({ error: "Not found" });
 });
 
 // Error handler (must be last, and must have 4 parameters)
@@ -131,7 +138,7 @@ app.use((err, req, res, next) => {
     return res.status(413).json({ error: "Request body is too large" });
   }
   console.error(err);
-  res.status(500).json({ error: "Internal server error" });
+  res.status(500).json({ error: "Something went wrong" });
 });
 
 app.listen(PORT, () => {
