@@ -1,4 +1,14 @@
-function BookList({ books, loading, error, filtered, onEdit, onRetry }) {
+function BookList({
+  books,
+  loading,
+  error,
+  filtered,
+  onEdit,
+  onRetry,
+  onToggleRead,
+  onRate,
+  onDelete,
+}) {
   if (loading) {
     return <p className="message">Loading books...</p>;
   }
@@ -36,9 +46,31 @@ function BookList({ books, loading, error, filtered, onEdit, onRetry }) {
             <span className={book.read ? "badge read" : "badge"}>
               {book.read ? "Read" : "Unread"}
             </span>
-            {book.read && book.rating !== null && <span>★ {book.rating}/5</span>}
+
+            {book.read && (
+              <select
+                className="rating-select"
+                aria-label={`Rating for ${book.title}`}
+                value={book.rating ?? ""}
+                onChange={(e) => onRate(book, e.target.value)}
+              >
+                <option value="">No rating</option>
+                {[1, 2, 3, 4, 5].map((n) => (
+                  <option key={n} value={n}>
+                    ★ {n}
+                  </option>
+                ))}
+              </select>
+            )}
+
+            <button type="button" onClick={() => onToggleRead(book)}>
+              {book.read ? "Mark unread" : "Mark read"}
+            </button>
             <button type="button" onClick={() => onEdit(book)}>
               Edit
+            </button>
+            <button type="button" className="danger" onClick={() => onDelete(book)}>
+              Delete
             </button>
           </div>
         </li>

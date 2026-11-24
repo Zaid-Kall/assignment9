@@ -38,6 +38,37 @@
   font: inherit;
 }
 
+.stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 10px;
+  margin: 16px 0;
+}
+
+.stat {
+  display: grid;
+  gap: 2px;
+  padding: 12px;
+  border: 1px solid #8884;
+  border-radius: 8px;
+}
+
+.stat strong {
+  font-size: 1.4rem;
+}
+
+.stat span {
+  opacity: 0.7;
+  font-size: 0.85rem;
+}
+
+.genres {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
 .book-list {
   list-style: none;
   margin: 0;
@@ -48,6 +79,7 @@
 
 .book {
   display: flex;
+  flex-wrap: wrap;
   justify-content: space-between;
   align-items: center;
   gap: 12px;
@@ -68,9 +100,19 @@
 
 .status {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 10px;
-  white-space: nowrap;
+  gap: 8px;
+}
+
+.rating-select {
+  padding: 6px 8px;
+  font: inherit;
+}
+
+.danger {
+  color: #d32f2f;
+  border-color: #d32f2f;
 }
 
 .badge {

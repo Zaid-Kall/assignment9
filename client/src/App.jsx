@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
-import { createBook, listBooks, updateBook } from "./api.js";
+import { createBook, deleteBook, listBooks, updateBook } from "./api.js";
 import BookControls from "./components/BookControls.jsx";
 import BookForm from "./components/BookForm.jsx";
 import BookList from "./components/BookList.jsx";
+import StatsPanel from "./components/StatsPanel.jsx";
 import "./App.css";
 
 const PAGE_SIZE = 5;
@@ -14,6 +15,7 @@ function App() {
   const [page, setPage] = useState(1);
   const [reloadCount, setReloadCount] = useState(0);
   const [form, setForm] = useState(null);
+  const [actionError, setActionError] = useState("");
   const [result, setResult] = useState({ key: "", items: [], total: 0, error: "" });
 
   useEffect(() => {
@@ -37,7 +39,15 @@ function App() {
       limit: PAGE_SIZE,
     })
       .then(({ items, total }) => {
-        if (!ignore) setResult({ key: requestKey, items, total, error: "" });
+        if (ignore) return;
+
+        // After deleting the last book on a page, go back to the last valid page
+        if (items.length === 0 && total > 0 && page > 1) {
+          setPage(Math.ceil(total / PAGE_SIZE));
+          return;
+        }
+
+        setResult({ key: requestKey, items, total, error: "" });
       })
       .catch((err) => {
         if (!ignore) setResult({ key: requestKey, items: [], total: 0, error: err.message });
@@ -53,6 +63,16 @@ function App() {
 
   function reload() {
     setReloadCount((count) => count + 1);
+  }
+
+  async function runAction(action) {
+    setActionError("");
+    try {
+      await action();
+      reload();
+    } catch (err) {
+      setActionError(err.message);
+    }
   }
 
   function handleChange(changes) {
@@ -81,6 +101,20 @@ function App() {
     reload();
   }
 
+  function handleToggleRead(book) {
+    const changes = book.read ? { read: false, rating: null } : { read: true };
+    runAction(() => updateBook(book.id, changes));
+  }
+
+  function handleRate(book, value) {
+    runAction(() => updateBook(book.id, { rating: value === "" ? null : Number(value) }));
+  }
+
+  function handleDelete(book) {
+    if (!window.confirm(`Delete "${book.title}"?`)) return;
+    runAction(() => deleteBook(book.id));
+  }
+
   return (
     <main className="app">
       <header className="app-header">
@@ -101,7 +135,15 @@ function App() {
         />
       )}
 
+      <StatsPanel refreshKey={reloadCount} />
+
       <BookControls filters={filters} onChange={handleChange} onReset={handleReset} />
+
+      {actionError && (
+        <p className="message error" role="alert">
+          {actionError}
+        </p>
+      )}
 
       <BookList
         books={result.items}
@@ -110,6 +152,9 @@ function App() {
         filtered={Boolean(debouncedQ || genre || read)}
         onEdit={handleEdit}
         onRetry={reload}
+        onToggleRead={handleToggleRead}
+        onRate={handleRate}
+        onDelete={handleDelete}
       />
 
       {!loading && !result.error && result.total > 0 && (
