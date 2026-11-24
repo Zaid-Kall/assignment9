@@ -9,6 +9,11 @@ const CLIENT_ORIGIN = process.env.CLIENT_ORIGIN || "http://localhost:5173";
 
 const app = express();
 
+app.use((req, res, next) => {
+  console.log(`${new Date().toISOString()} ${req.method} ${req.originalUrl}`);
+  next();
+});
+
 app.use(cors({ origin: CLIENT_ORIGIN, exposedHeaders: ["X-Total-Count", "Location"] }));
 app.use(express.json());
 
